@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Wallet</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style-dropwdown.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>Wallet</h2>
+
+        <div class="totalBalance-container">
+            <div class="totalBalance">
+                <div class="pie-chart_wrap">
+                    <canvas id="myChart"></canvas>
+                </div>
+                <div class="totalBalance-wrap">
+                    <p id="total-balance">0.00</p>
+                    <p id="total-balance-label">Available Balance</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-summary">
+            <div class="income-summary">
+                <div class="circle">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <div>
+                    <p>Income</p>
+                    <p>000</p>
+                </div>
+            </div>
+
+            <div class="outcome-summary">
+                <div class="circle">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <div>
+                    <p>Expenses</p>
+                    <p>000</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="balances">
+            <h3>Income (Account Balances)</h3>
+            <div>BPI: $<span id="bpi-balance">0.00</span></div>
+            <div>BDO: $<span id="bdo-balance">0.00</span></div>
+            <div>GoTyme: $<span id="gotyme-balance">0.00</span></div>
+        </div>
+
+        <div class="history">
+            <h3>Outcome (Expenses)</h3>
+        </div>
+    </div>
+
+    <!-- Floating Button -->
+    <div class="floatingButtonWrap button">
+        <button id="two" class="floating-btn" onclick="toggleButton()">
+            <span class="button-text">+</span>
+        </button>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal-container">
+        <div class="modal-background">
+            <div class="modal">
+                <h2>I'm a Modal</h2>
+                <p>Hear me roar.</p>
+
+                <!-- Input Transaction Section START-->
+                <div class="modal-content">
+                    <div class="input-group">
+
+                        <div class="filters">
+                            <div class="select-layout">
+                                <select id="category" class="select-club-services" name="club-services">
+                                    <option value="income" selected>Income</option>
+                                    <option value="outcome">Outcome</option>
+                                </select>
+                            </div>
+
+                            <div class="select-layout">
+                                <select id="bank" class="select-club-services" name="club-services">
+                                    <option value="bdo" selected>BDO</option>
+                                    <option value="bpi">BPI</option>
+                                    <option value="gotyme">GoTyme</option>
+                                </select>
+                            </div>
+
+                            <div class="select-layout">
+                                <div class="form-item">
+                                    <input type="number" id="amount" required>
+                                    <label for="amount">Amount</label>
+                                </div>
+                            </div>
+
+                            <div class="select-layout">
+                                <div class="button-layout">
+                                    <button class="loading-button" onclick="addTransaction()"><span>Add</span></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Input Transaction Section STOP -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function toggleButton() {
+            const button = document.querySelector('.floating-btn');
+            const text = button.querySelector('.button-text');
+
+            if (text.textContent === '+') {
+                text.textContent = '-';
+                button.classList.add('active');
+            } else {
+                text.textContent = '+';
+                button.classList.remove('active');
+            }
+        }
+
+        $('.floating-btn').click(function () {
+            var buttonId = $(this).attr('id');
+            $('#modal-container').removeAttr('class').addClass(buttonId);
+            //$('body').addClass('modal-active');
+
+            history.pushState({ modalOpen: true }, '', window.location.href);
+        })
+
+        $('#modal-container').click(function (e) {
+            if ($(e.target).is('.modal-background')) {
+                $(this).addClass('out');
+                toggleButton();
+
+                //history.back();
+            }
+        });
+
+        window.addEventListener('popstate', function (e) {
+            if (e.state && e.state.modalOpen) {
+            } else {
+                $('#modal-container').addClass('out');
+                //$('body').removeClass('modal-active');
+                toggleButton();
+            }
+        });
+
+        $('select.select-club-services').each(function () {
+
+            var dropdown = $('<div />').addClass('select-club-services selectDropdown');
+
+            $(this).wrap(dropdown);
+
+            var label = $('<span />').text($(this).attr('placeholder')).insertAfter($(this));
+            var list = $('<ul />');
+
+            $(this).find('option').each(function () {
+                list.append($('<li />').append($('<a />').text($(this).text())));
+            });
+
+            list.insertAfter($(this));
+
+            if ($(this).find('option:selected').length) {
+                label.text($(this).find('option:selected').text());
+                list.find('li:contains(' + $(this).find('option:selected').text() + ')').addClass('active');
+                $(this).parent().addClass('filled');
+            }
+
+        });
+
+        $(document).on('click touch', '.selectDropdown ul li a', function (e) {
+            e.preventDefault();
+            var dropdown = $(this).parent().parent().parent();
+            var active = $(this).parent().hasClass('active');
+            var label = active ? dropdown.find('select').attr('placeholder') : $(this).text();
+
+            dropdown.find('option').prop('selected', false);
+            dropdown.find('ul li').removeClass('active');
+
+            dropdown.toggleClass('filled', !active);
+            dropdown.children('span').text(label);
+
+            if (!active) {
+                dropdown.find('option:contains(' + $(this).text() + ')').prop('selected', true);
+                $(this).parent().addClass('active');
+            }
+
+            dropdown.removeClass('open');
+        });
+
+        $('.select-club-services > span').on('click touch', function (e) {
+            var self = $(this).parent();
+            self.toggleClass('open');
+        });
+
+        $(document).on('click touch', function (e) {
+            var dropdown = $('.select-club-services');
+            if (dropdown !== e.target && !dropdown.has(e.target).length) {
+                dropdown.removeClass('open');
+            }
+        });
+    </script>
+</body>
+
+</html>
